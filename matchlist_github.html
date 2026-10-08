@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>対戦中・スタンバイ一覧</title>
+
+<!--
+  テレビ表示用（Fire TV Stick / Silk Browser 想定）の対戦中・スタンバイ一覧【GitHub Pages 版】。
+  ・GAS内の matchlist.html と表示は同じ。データは google.script.run ではなく、
+    GAS Webアプリの JSON API（WebアプリURL?api=matchlist）から fetch で取得する。
+  ・下の API_URL に、GAS Webアプリの公開URL（末尾が /exec のもの）を設定すること。
+    Webアプリのアクセス権限は「全員」にしておく必要がある。
+  ・文字や要素のサイズは、html の font-size（= 画面幅 vw × 倍率 --font-scale）を基準にした rem / em で指定し、
+    テレビの解像度が違っても画面に対して同じ比率で表示されるようにしている。
+  ・画面内の「＋ / －」ボタンで --font-scale を変更し、全体の文字サイズを拡大縮小する（ブラウザに保存）。
+  ・データは1分おきにサーバーから取り直して再描画する。
+-->
+<script>
+  // 保存済みの文字サイズ倍率を描画前に適用（ちらつき防止）
+  (function(){
+    try {
+      var saved = parseFloat(localStorage.getItem('matchlistFontScale'));
+      if (saved > 0) document.documentElement.style.setProperty('--font-scale', saved);
+    } catch (e) {}
+  })();
+</script>
+
+<style>
+  :root{
+    --font-scale: 1;
+    --bg: #0D1B2A;
+    --card-bg: #1B263B;
+    --text-main: #FFFFFF;
+    --text-sub: #C9D3DF;
+    --accent: #FFC107;
+    --status-ok: #A5D6A7;
+    --border-soft: #788ba1;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{
+    /* 1920px幅のテレビで約19px。倍率は＋／－ボタンで変更 */
+    font-size: calc(1vw * var(--font-scale));
+  }
+  html, body{
+    margin:0; padding:0;
+    width:100%; height:100%;
+    overflow:hidden; /* 横・縦ともにスクロールバーを出さない */
+    background:var(--bg);
+    color:var(--text-main);
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Noto Sans CJK JP",sans-serif;
+  }
+
+  #wrapper{
+    width:100vw;
+    height:100vh;
+    box-sizing:border-box;
+    overflow:hidden;
+    padding:1.2vw 1.5vw;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- ヘッダー ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:1.5vw;
+    padding-bottom:0.8vw;
+    margin-bottom:1vw;
+    border-bottom:0.25vw solid var(--accent);
+    flex:0 0 auto;
+  }
+  #tournament-name{
+    font-size:1.6rem; font-weight:bold;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    min-width:0;
+  }
+  .header-right{
+    display:flex; align-items:center; gap:1.2vw;
+    flex:0 0 auto;
+  }
+  #clock{ font-size:1.8rem; font-weight:bold; color:var(--accent); }
+  #updated{ font-size:0.9rem; color:var(--text-sub); white-space:nowrap; }
+  #updated.error{ color:#FF8A80; font-weight:bold; }
+
+  .size-controls{ display:flex; align-items:center; gap:0.4vw; }
+  .size-controls button{
+    font-size:1.3rem; font-weight:bold; line-height:1;
+    width:2.4em; height:1.9em;
+    background:var(--card-bg); color:var(--text-main);
+    border:0.15vw solid var(--border-soft); border-radius:0.4em;
+    cursor:pointer;
+  }
+  /* リモコン操作時にどのボタンが選択中か分かるよう、フォーカスを強調 */
+  .size-controls button:focus{
+    outline:0.25vw solid var(--accent); outline-offset:0.15vw;
+    border-color:var(--accent);
+  }
+  #size-label{ font-size:0.9rem; color:var(--text-sub); min-width:3.5em; text-align:center; }
+
+  /* ---------- 2カラム ---------- */
+  #columns{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap:1.5vw;
+  }
+  .column{
+    display:flex; flex-direction:column;
+    min-height:0; min-width:0;
+    overflow:hidden;
+  }
+  .column-title{
+    font-size:1.5rem; font-weight:bold; color:var(--accent);
+    margin:0 0 0.6em;
+    display:flex; align-items:baseline; gap:0.6em;
+    flex:0 0 auto;
+  }
+  .column-title .count{ font-size:0.75em; color:var(--text-sub); font-weight:normal; }
+
+  .list{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content:start;
+    gap:0.6rem;
+  }
+  /* 対戦中が多いときは2列に詰めて表示 */
+  .list.two-col{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+
+  /* ---------- カード ---------- */
+  .card{
+    display:flex; align-items:stretch;
+    background:var(--card-bg);
+    border:0.1vw solid var(--border-soft);
+    border-radius:0.5rem;
+    overflow:hidden;
+    min-width:0;
+  }
+  .card.playing{ border-left:0.5rem solid var(--status-ok); }
+  .card.standby{ border-left:0.5rem solid var(--accent); }
+
+  .badge{
+    flex:0 0 auto;
+    width:4.6rem;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:bold;
+    border-right:0.1vw solid var(--border-soft);
+  }
+  .card.playing .badge{ color:var(--status-ok); }
+  .card.standby .badge{ color:var(--accent); }
+  .badge .badge-label{ font-size:0.75rem; color:var(--text-sub); font-weight:normal; }
+  .badge .badge-value{ font-size:2.2rem; line-height:1.1; }
+
+  .card-body{
+    flex:1 1 auto; min-width:0;
+    padding:0.45rem 0.8rem;
+  }
+  .card-head{
+    font-size:0.85rem; color:var(--text-sub);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .card-head .match-no{ color:var(--accent); font-weight:bold; margin-right:0.6em; }
+  .player{
+    display:flex; align-items:baseline; gap:0.6em;
+    min-width:0;
+    white-space:nowrap; overflow:hidden;
+  }
+  .player .name{
+    font-size:1.55rem; font-weight:bold;
+    overflow:hidden; text-overflow:ellipsis;
+    flex:0 1 auto; min-width:0;
+  }
+  .player .meta{
+    font-size:0.85rem; color:var(--text-sub);
+    overflow:hidden; text-overflow:ellipsis;
+    flex:0 1 auto; min-width:0;
+  }
+  .vs{ font-size:0.8rem; color:var(--text-sub); line-height:1.1; }
+
+  /* スタンバイカード：2人を「○○ vs △△」の横並びで1行に表示 */
+  .players-row{
+    display:flex; align-items:baseline; gap:0.8em;
+    min-width:0;
+  }
+  .players-row .player{ flex:1 1 0; }
+  .players-row .vs{ flex:0 0 auto; font-size:1rem; font-weight:bold; }
+  /* 幅が足りないときは所属などの補足情報から先に省略する */
+  .players-row .player .meta{ flex-shrink:100; }
+
+  /* 2列表示時は少し小さく */
+  .list.two-col .player .name{ font-size:1.3rem; }
+  .list.two-col .badge{ width:3.8rem; }
+  .list.two-col .badge .badge-value{ font-size:1.8rem; }
+
+  .empty{ font-size:1.2rem; color:var(--text-sub); padding:0.6em 0.2em; }
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+  <header>
+    <div id="tournament-name">対戦中・スタンバイ一覧</div>
+    <div class="header-right">
+      <span id="updated">読み込み中…</span>
+      <div class="size-controls">
+        <button type="button" id="size-down" onclick="changeFontScale_(-1)" title="文字を小さく">－</button>
+        <span id="size-label">100%</span>
+        <button type="button" id="size-up" onclick="changeFontScale_(1)" title="文字を大きく">＋</button>
+      </div>
+      <span id="clock"></span>
+    </div>
+  </header>
+
+  <div id="columns">
+    <section class="column">
+      <h2 class="column-title">対戦中 <span class="count" id="playing-count"></span></h2>
+      <div class="list" id="playing-list"><div class="empty">読み込み中…</div></div>
+    </section>
+    <section class="column">
+      <h2 class="column-title">スタンバイ <span class="count">（次に呼び出す順）</span></h2>
+      <div class="list" id="standby-list"><div class="empty">読み込み中…</div></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ★ GAS Webアプリの公開URL（「デプロイを管理」で表示される、末尾が /exec のURL）を設定する
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxgl_hidE-k3jRyowCzwh8nIZaIZSZEimS23KVB_OfqxTH5kKZ6CsyWdIAJUMVFTN-u/exec';
+
+  var REFRESH_INTERVAL_MS = 60000; // 1分おきに最新データへ更新
+  var FONT_SCALES = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.35, 1.5, 1.7, 1.9];
+  var TWO_COL_THRESHOLD = 6; // 対戦中がこの件数を超えたら2列表示
+
+  // ---------- 文字サイズ変更（html の font-size = 1vw × 倍率） ----------
+  function getFontScale_(){
+    var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'));
+    return v > 0 ? v : 1;
+  }
+
+  function setFontScale_(scale){
+    document.documentElement.style.setProperty('--font-scale', scale);
+    document.getElementById('size-label').textContent = Math.round(scale * 100) + '%';
+    try { localStorage.setItem('matchlistFontScale', String(scale)); } catch (e) {}
+  }
+
+  function changeFontScale_(direction){
+    var current = getFontScale_();
+    // 現在値に最も近い段階から1段階上下させる
+    var idx = 0;
+    for (var i = 0; i < FONT_SCALES.length; i++) {
+      if (Math.abs(FONT_SCALES[i] - current) < Math.abs(FONT_SCALES[idx] - current)) idx = i;
+    }
+    idx = Math.min(Math.max(idx + direction, 0), FONT_SCALES.length - 1);
+    setFontScale_(FONT_SCALES[idx]);
+  }
+
+  // ---------- 表示 ----------
+  function escapeHtml_(s){
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function playerHtml_(p){
+    return '<div class="player"><span class="name">' + escapeHtml_(p.name) + '</span>' +
+      (p.meta ? '<span class="meta">' + escapeHtml_(p.meta) + '</span>' : '') + '</div>';
+  }
+
+  function cardHtml_(card, type, badgeLabel, badgeValue){
+    // 対戦中カードは2人を縦に、スタンバイカードは横に並べる
+    var playersHtml = type === 'standby'
+      ? '<div class="players-row">' + playerHtml_(card.player1) + '<span class="vs">vs</span>' + playerHtml_(card.player2) + '</div>'
+      : playerHtml_(card.player1) + '<div class="vs">vs</div>' + playerHtml_(card.player2);
+    return '<div class="card ' + type + '">' +
+        '<div class="badge"><span class="badge-label">' + badgeLabel + '</span>' +
+          '<span class="badge-value">' + escapeHtml_(badgeValue) + '</span></div>' +
+        '<div class="card-body">' +
+          '<div class="card-head"><span class="match-no">' + escapeHtml_(card.matchNo) + '</span>' + escapeHtml_(card.stage) + '</div>' +
+          playersHtml +
+        '</div>' +
+      '</div>';
+  }
+
+  function render_(data){
+    if (data.tournamentName) {
+      document.getElementById('tournament-name').textContent = data.tournamentName;
+    }
+
+    var playing = data.playing || [];
+    var playingList = document.getElementById('playing-list');
+    playingList.className = 'list' + (playing.length > TWO_COL_THRESHOLD ? ' two-col' : '');
+    playingList.innerHTML = playing.length
+      ? playing.map(function(c){ return cardHtml_(c, 'playing', 'Table', c.tableNo); }).join('')
+      : '<div class="empty">現在対戦中の試合はありません</div>';
+    document.getElementById('playing-count').textContent = playing.length ? '（' + playing.length + '試合）' : '';
+
+    var standby = data.standby || [];
+    document.getElementById('standby-list').innerHTML = standby.length
+      ? standby.map(function(c, i){ return cardHtml_(c, 'standby', '順番', i + 1); }).join('')
+      : '<div class="empty">スタンバイ中の試合はありません</div>';
+
+    var updated = document.getElementById('updated');
+    updated.className = '';
+    updated.textContent = '最終更新 ' + formatTime_(new Date(), true);
+  }
+
+  function onLoadError_(err){
+    // 取得に失敗しても直前の表示は残し、次回の自動更新で再取得する
+    console.error(err);
+    var updated = document.getElementById('updated');
+    updated.className = 'error';
+    updated.textContent = '更新失敗 ' + formatTime_(new Date(), true) + '（1分後に再試行）';
+  }
+
+  // GASのJSON APIから取得する。
+  // ※独自ヘッダーを付けるとCORSのプリフライトが発生し、GASは応答できないため、単純なGETのみで呼び出す
+  function loadData_(){
+    var url = API_URL + (API_URL.indexOf('?') === -1 ? '?' : '&') + 'api=matchlist&_=' + Date.now();
+    fetch(url, { cache: 'no-store' })
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        if (data && data.error) throw new Error(data.error);
+        render_(data);
+      })
+      .catch(onLoadError_);
+  }
+
+  function pad2_(n){ return (n < 10 ? '0' : '') + n; }
+  function formatTime_(d, withSeconds){
+    return pad2_(d.getHours()) + ':' + pad2_(d.getMinutes()) + (withSeconds ? ':' + pad2_(d.getSeconds()) : '');
+  }
+
+  function startClock_(){
+    var el = document.getElementById('clock');
+    var tick = function(){ el.textContent = formatTime_(new Date(), false); };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setFontScale_(getFontScale_());
+    startClock_();
+    loadData_();
+    setInterval(loadData_, REFRESH_INTERVAL_MS);
+  });
+</script>
+
+</body>
+</html>
