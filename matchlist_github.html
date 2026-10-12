@@ -20,6 +20,8 @@
   // 保存済みの文字サイズ倍率を描画前に適用（ちらつき防止）
   (function(){
     try {
+      var ws = parseFloat(new URLSearchParams(location.search).get('ws'));
+      if (ws > 0) document.documentElement.style.setProperty('--width-scale', ws);
       var saved = parseFloat(localStorage.getItem('matchlistFontScale'));
       if (saved > 0) document.documentElement.style.setProperty('--font-scale', saved);
     } catch (e) {}
@@ -29,6 +31,7 @@
 <style>
   :root{
     --font-scale: 1;
+    --width-scale: 1;   /* ← 追加：横幅の倍率（1 = 画面幅いっぱい） */
     --bg: #0D1B2A;
     --card-bg: #1B263B;
     --text-main: #FFFFFF;
@@ -54,8 +57,9 @@
   }
 
   #wrapper{
-    width:100vw;
+    width:calc(100vw * var(--width-scale));   /* 変更前: width:100vw; */
     height:100vh;
+    margin:0 auto;   /* ← 追加：左右中央に配置 */
     box-sizing:border-box;
     overflow:hidden;
     padding:1.2vw 1.5vw;
