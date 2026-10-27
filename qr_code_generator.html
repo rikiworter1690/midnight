@@ -21,7 +21,7 @@
     body {
       background: radial-gradient(circle at top, #0f182e 0%, #050814 75%, #000000 100%);
       font-family: 'Montserrat', sans-serif, "Hiragino Kaku Gothic ProN", "Meiryo";
-      color: #ffffff;
+      color: #d1d5db;
       min-height: 100vh;
     }
 
@@ -73,8 +73,8 @@
     <div class="inline-block p-3 rounded-2xl bg-black/40 border border-blue-900/30 shadow-2xl hover:scale-105 transition-transform duration-300">
       <img id="header-logo-img" src="midhead.gif" alt="Billiards & Darts Midnight" class="h-20 md:h-24 object-contain mx-auto filter drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" onerror="this.onerror=null; this.src='https://placehold.co/280x100/000000/ffffff?text=midhead.gif+Missing';">
     </div>
-    <p class="text-yellow-300/80 text-xs md:text-sm mt-4 tracking-widest uppercase font-semibold">
-      <i class="fa-solid fa-qrcode mr-2 text-yellow-400"></i>Logo Overlay QR Code Generator
+    <p class="text-gray-300/80 text-xs md:text-sm mt-4 tracking-widest uppercase font-semibold">
+      <i class="fa-solid fa-qrcode mr-2 text-gray-400"></i>Logo Overlay QR Code Generator
     </p>
   </header>
 
@@ -86,49 +86,49 @@
       
       <!-- 1. 入力コンテンツ -->
       <div>
-        <label class="block text-sm font-semibold text-yellow-200 mb-2">
-          <i class="fa-solid fa-link mr-2 text-yellow-400"></i>QRコードに載せるテキスト / URL
+        <label class="block text-sm font-semibold text-gray-300 mb-2">
+          <i class="fa-solid fa-link mr-2 text-gray-400"></i>QRコードに載せるテキスト / URL
         </label>
         <textarea id="qr-data" rows="3" 
-          class="w-full bg-slate-950/90 border border-blue-900/60 rounded-xl p-3 text-sm text-yellow-100 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-yellow-700/60"
+          class="w-full bg-slate-950/90 border border-blue-900/60 rounded-xl p-3 text-sm text-gray-200 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-gray-600"
           placeholder="https://example.com や任意のテキストを入力してください">https://example.com</textarea>
       </div>
 
       <!-- 2. ロゴ画像設定 -->
       <div class="border-t border-slate-800/80 pt-5">
-        <label class="block text-sm font-semibold text-yellow-200 mb-2">
-          <i class="fa-solid fa-image mr-2 text-yellow-400"></i>中央ロゴ画像の切り替え
+        <label class="block text-sm font-semibold text-gray-300 mb-2">
+          <i class="fa-solid fa-image mr-2 text-gray-400"></i>中央ロゴ画像の切り替え
         </label>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
           <!-- ファイル選択 -->
           <div>
-            <label for="logo-file" class="flex items-center justify-center w-full p-3 bg-slate-950/80 border border-dashed border-blue-500/40 rounded-xl cursor-pointer hover:bg-slate-900/80 hover:border-blue-400 transition-all text-xs text-yellow-300">
-              <i class="fa-solid fa-cloud-arrow-up text-base mr-2 text-yellow-400"></i>
+            <label for="logo-file" class="flex items-center justify-center w-full p-3 bg-slate-950/80 border border-dashed border-blue-500/40 rounded-xl cursor-pointer hover:bg-slate-900/80 hover:border-blue-400 transition-all text-xs text-gray-300">
+              <i class="fa-solid fa-cloud-arrow-up text-base mr-2 text-gray-400"></i>
               <span id="file-name-display">カスタム画像をアップロード</span>
             </label>
             <input type="file" id="logo-file" accept="image/*" class="hidden">
           </div>
 
           <!-- デフォルトロゴに戻すボタン -->
-          <button id="reset-logo-btn" type="button" class="px-4 py-3 bg-slate-900 hover:bg-slate-800 text-yellow-200 border border-slate-700/60 rounded-xl text-xs flex items-center justify-center transition-all">
-            <i class="fa-solid fa-rotate-left mr-2 text-yellow-400"></i>原稿ロゴ (midhead.gif) に復元
+          <button id="reset-logo-btn" type="button" class="px-4 py-3 bg-slate-900 hover:bg-slate-800 text-gray-300 border border-slate-700/60 rounded-xl text-xs flex items-center justify-center transition-all">
+            <i class="fa-solid fa-rotate-left mr-2 text-gray-400"></i>原稿ロゴ (midhead.gif) に復元
           </button>
         </div>
 
         <!-- ロゴサイズ調整 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
           <div>
-            <div class="flex justify-between text-xs text-yellow-200 mb-1">
+            <div class="flex justify-between text-xs text-gray-300 mb-1">
               <span>ロゴの大きさ (相対比)</span>
-              <span id="logo-size-val" class="text-yellow-400 font-mono">32%</span>
+              <span id="logo-size-val" class="text-gray-400 font-mono">32%</span>
             </div>
             <input type="range" id="logo-size" min="15" max="32" value="32" class="w-full cursor-pointer">
           </div>
           <div>
-            <div class="flex justify-between text-xs text-yellow-200 mb-1">
+            <div class="flex justify-between text-xs text-gray-300 mb-1">
               <span>ロゴ背景（白枠 Padding）</span>
-              <span id="logo-padding-val" class="text-yellow-400 font-mono">8px</span>
+              <span id="logo-padding-val" class="text-gray-400 font-mono">8px</span>
             </div>
             <input type="range" id="logo-padding" min="0" max="16" value="8" class="w-full cursor-pointer">
           </div>
@@ -137,15 +137,15 @@
 
       <!-- 3. デザイン & カスタマイズ -->
       <div class="border-t border-slate-800/80 pt-5 space-y-4">
-        <label class="block text-sm font-semibold text-yellow-200">
-          <i class="fa-solid fa-sliders mr-2 text-yellow-400"></i>サイズ＆配色カスタマイズ
+        <label class="block text-sm font-semibold text-gray-300">
+          <i class="fa-solid fa-sliders mr-2 text-gray-400"></i>サイズ＆配色カスタマイズ
         </label>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- サイズ選択 -->
           <div>
-            <label class="block text-xs text-yellow-200 mb-1">解像度 (px)</label>
-            <select id="qr-size" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-yellow-100 focus:outline-none focus:border-blue-400">
+            <label class="block text-xs text-gray-300 mb-1">解像度 (px)</label>
+            <select id="qr-size" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-blue-400">
               <option value="200">200 x 200 px</option>
               <option value="300">300 x 300 px (Web標準)</option>
               <option value="500" selected>500 x 500 px (高画質)</option>
@@ -156,28 +156,28 @@
 
           <!-- コード色 (Foreground) -->
           <div>
-            <label class="block text-xs text-yellow-200 mb-1">コードの色 (前景色)</label>
+            <label class="block text-xs text-gray-300 mb-1">コードの色 (前景色)</label>
             <div class="flex items-center space-x-2">
               <input type="color" id="color-dark" value="#050814" class="h-8 w-10 bg-transparent rounded cursor-pointer border-0">
-              <span id="color-dark-hex" class="text-xs font-mono text-yellow-200">#050814</span>
+              <span id="color-dark-hex" class="text-xs font-mono text-gray-300">#050814</span>
             </div>
           </div>
 
           <!-- 背景色 (Background) -->
           <div>
-            <label class="block text-xs text-yellow-200 mb-1">背景色</label>
+            <label class="block text-xs text-gray-300 mb-1">背景色</label>
             <div class="flex items-center space-x-2">
               <input type="color" id="color-light" value="#ffffff" class="h-8 w-10 bg-transparent rounded cursor-pointer border-0">
-              <span id="color-light-hex" class="text-xs font-mono text-yellow-200">#ffffff</span>
+              <span id="color-light-hex" class="text-xs font-mono text-gray-300">#ffffff</span>
             </div>
           </div>
         </div>
 
         <!-- 誤り訂正レベル -->
-        <div class="bg-blue-950/30 border border-blue-900/50 p-3 rounded-xl text-xs text-yellow-200/90 flex items-start space-x-2">
-          <i class="fa-solid fa-shield-halved text-yellow-400 text-sm mt-0.5"></i>
+        <div class="bg-blue-950/30 border border-blue-900/50 p-3 rounded-xl text-xs text-gray-300/90 flex items-start space-x-2">
+          <i class="fa-solid fa-shield-halved text-gray-400 text-sm mt-0.5"></i>
           <div>
-            <span class="font-semibold text-yellow-300">誤り訂正レベル H (High Error Correction):</span>
+            <span class="font-semibold text-gray-300">誤り訂正レベル H (High Error Correction):</span>
             コードの約30%が復元可能に設定されています。中央にロゴ画像を重ねてもスキャナーでの高い読み取り率を確保できます。
           </div>
         </div>
@@ -188,8 +188,8 @@
     <!-- 右側：プレビュー & アクション (5カラム) -->
     <section class="lg:col-span-5 flex flex-col justify-between midnight-card rounded-2xl p-5 md:p-7 text-center">
       <div>
-        <h2 class="text-sm font-semibold text-yellow-200 mb-4 flex items-center justify-center">
-          <i class="fa-solid fa-eye mr-2 text-yellow-400"></i>リアルタイム プレビュー
+        <h2 class="text-sm font-semibold text-gray-300 mb-4 flex items-center justify-center">
+          <i class="fa-solid fa-eye mr-2 text-gray-400"></i>リアルタイム プレビュー
         </h2>
 
         <!-- Canvas表示エリア -->
@@ -198,18 +198,18 @@
         </div>
 
         <!-- 情報表示 -->
-        <div id="status-message" class="text-xs text-yellow-200 mt-3">
+        <div id="status-message" class="text-xs text-gray-300 mt-3">
           画面上で右クリックでの保存、または下のボタンからダウンロードできます。
         </div>
       </div>
 
       <!-- アクションボタン群 -->
       <div class="space-y-3 mt-6">
-        <button id="download-btn" type="button" class="w-full glow-button text-yellow-100 font-semibold py-3.5 px-6 rounded-xl flex items-center justify-center text-sm tracking-wide">
+        <button id="download-btn" type="button" class="w-full glow-button text-gray-200 font-semibold py-3.5 px-6 rounded-xl flex items-center justify-center text-sm tracking-wide">
           <i class="fa-solid fa-download mr-2 text-lg"></i>PNG画像として保存
         </button>
 
-        <button id="copy-btn" type="button" class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-200 border border-blue-800/50 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center text-xs transition-all">
+        <button id="copy-btn" type="button" class="w-full bg-slate-900 hover:bg-slate-800 text-gray-300 border border-blue-800/50 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center text-xs transition-all">
           <i class="fa-solid fa-copy mr-2"></i>クリップボードにコピー
         </button>
       </div>
@@ -218,13 +218,13 @@
   </main>
 
   <!-- トースト通知 -->
-  <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-yellow-100 px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+  <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-gray-200 px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
     <i id="toast-icon" class="fa-solid fa-circle-check"></i>
     <span id="toast-msg" class="text-xs font-semibold">メッセージ</span>
   </div>
 
   <!-- フッター -->
-  <footer class="w-full text-center text-yellow-300/70 text-xs py-4 my-2">
+  <footer class="w-full text-center text-gray-300/70 text-xs py-4 my-2">
     &copy; Billiards & Darts Midnight. All Rights Reserved.
   </footer>
 
